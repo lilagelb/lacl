@@ -1,16 +1,19 @@
 # Lilagelb's Application Configuration Language - Specification
+# Lilagelb's Application Configuration Language - Specification v0.1.1
 
 ## Naming
 
-LACL field and section names can only contain the standard charset of `[A-Za-z0-9_\]`, and cannot start with a number.
+LACL field and section names can only contain the standard charset of `[A-Za-z0-9_]`, and cannot start with a number.
 
 ## Datatypes
 
 LACL has 4 datatypes:
-- Strings (this is the default)
-- Integers
-- Floats
-- Booleans
+| Type | LACL Identifier | What does it hold? | Examples |
+|------|-----------------|--------------------|----------|
+| String | `string` | A raw character string | `Hello, world!` |
+| Integer | `int` | An integer value | `42`, `-3` |
+| Float | `float` | A floating-point value | `3.14159`, `-2.718` |
+| Boolean | `bool` | A boolean value | `true`, `false` |
 
 LACL does *not* have a concept of null. There are many great explanations on the web as to why null is generally a bad idea, so I won't include one here.
 
@@ -61,7 +64,7 @@ price: 1.80
 colour: orange
 ```
 
-You can add more hashes for ever-smaller sections (e.g. `####`). You can add as many as you like (though if you find that you've gone above three or four, you should probably consider moving to a more structured markup language).
+You can add more hashes for ever-smaller sections (e.g. `####`). The number of hashes a section has is known as its **section level**. You can add as many as you like (though if you find that you've gone above a level of three or four, you should probably consider moving to a more structured markup language). Subsections must *strictly* have a section level of one more than the section that contains them (i.e. you cannot increase by more than one level at a time).
 
 ### The Root Section
 
@@ -129,7 +132,7 @@ expression := blue  // this will look for and take the value of the field `blue`
 
 ### References
 
-A **reference** refers to another field in the file. Names are resolved from the section of the reference outwards (like variable scoping in most programming languages). To explicitly refer to a field outside of the current section where a field of the same name exists in the current section, use dot notation, e.g. `section.field`, to unambiguously specify the intended field. The field does not have to have been defined above the name reference; the parser will search the whole file for the field, erroring if it cannot find one fitting the specifier or if it cannot unambiguously pick a single field.
+A **reference** refers to another field in the file. Names are resolved from the section of the reference outwards (like variable scoping in most programming languages). To explicitly refer to a field outside of the current section where a field of the same name exists in the current section, use dot notation, e.g. `section.field`, to unambiguously specify the intended field. The field must have been defined above the name reference; the parser will not search the whole file for the field.It will error if it cannot find one fitting the specifier or if it cannot unambiguously pick a single field.
 
 ```lacl
 # section_1
@@ -141,16 +144,16 @@ field_2 = two
 field_1 = eins
 field_2 := field_1                // 'eins'
 field_3 := section_1_1_1.field_1  // 'one'
-							      // `section_1.section_1_1.field_1` would also be fine, but excessive
-							      // `root.section_1.section_1_1.field_1` is the full identifier, but very rarely would that need to be used
-field_4 := section_1_3.field_1    // 'un' - note that section_1_3.field_1 is defined *after* this reference
+                                  // `section_1.section_1_1.field_1` would also be fine, but excessive
+                                  // `root.section_1.section_1_1.field_1` is the full identifier, but very rarely would that need to be used
+field_4 := section_1_3.field_1    // error - section_1_3.field_1 is defined *after* this reference
 
 ## section_1_3
 field_1 = un
 field_2 = deux
 ```
 
-The parser will error if the inheriting field explicitly states a type other than that of the name reference. The parser will *not* perform type inference if the referenced field does not declare a type, but the inheriting field does - the referenced field will be taken to have the default string type.
+The parser will error if the inheriting field explicitly states a type other than that of the name reference. The parser will *not* perform type inference if the referenced field does not declare a type, but the inheriting field does - the referenced field will have been taken to have the default string type.
 
 ```lacl
 pi [float] = 3.1415926
@@ -164,7 +167,7 @@ pi_2 [float] := pi  // error - `pi` is of type string, but `pi_2` requires a flo
 
 ### Expression Evaluation
 
-LACL expressions hinge around some very basic operators: `+`, `-`, `*`, `/`. They are only defined where intuitive:
+LACL expressions hinge around some very basic operators: `+`, `-`, `*`, `/`, which have thier standard priorities. They are only defined where intuitive:
 - `int` and `float` types have them defined as the standard arithmetic operations.
 	- The operators allow a mix of `int`s and `float`s in the operands, but the result will *only* have type `int` if *both* the operands were `int`s (even if the result is integer)
 - The `string` type has only `+`, where it serves the purpose of concatenation.
